@@ -21,7 +21,12 @@ dependencies = [
     "fastapi (>=0.117.1,<0.118.0)",
     "uvicorn (>=0.36.0,<0.37.0)",
     "apscheduler (>=3.11.0,<4.0.0)",
-    "loguru (>=0.7.3,<0.8.0)"
+    "loguru (>=0.7.3,<0.8.0)",
+    "langgraph (>=0.6.7,<0.7.0)",
+    "langchain-google-genai (>=2.1.12,<3.0.0)",
+    "yfinance (>=0.2.66,<0.3.0)",
+    "aiohttp (>=3.12.15,<4.0.0)",
+    "ta-lib (>=0.6.7,<0.7.0)"
 ]
 
 

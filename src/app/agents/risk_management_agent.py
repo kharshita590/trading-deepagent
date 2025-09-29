@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timedelta
 import math
+from langgraph.graph import StateGraph, END
 
 class StopLossType(Enum):
     FIXED = "fixed"
@@ -51,7 +52,6 @@ class RiskManagementState(TypedDict):
     technical_analysis: Dict[str, Any]
     volatility_data: Dict[str, Any]
     behavioral_biases: List[Dict[str, Any]]
-    # backtest_results: Dict[str, Any]
     position_sizing: Dict[str, Any]
     risk_metrics: Dict[str, Any]
     stop_loss_levels: Dict[str, Dict[str, Any]]
@@ -68,6 +68,13 @@ class RiskManagementAgent:
         self.risk_parameters = self._initialize_risk_parameters()
         self.atr_periods = 14  
         self.max_portfolio_risk = self._get_max_portfolio_risk()
+    
+    def create_workflow(self) -> StateGraph:
+        workflow = StateGraph(RiskManagementState)
+        workflow.add_node("risk_management", self)
+        workflow.set_entry_point("risk_management")
+        workflow.add_edge("risk_management", END)
+        return workflow.compile()
         
     def _initialize_risk_parameters(self) -> Dict[str, Any]:
         risk_configs = {
@@ -222,11 +229,11 @@ class RiskManagementAgent:
         sector_risk = self._calculate_sector_concentration_risk(selected_stocks)        
         volatility_risk = self._calculate_volatility_risk(selected_stocks)        
         behavioral_adjustment = self._calculate_behavioral_risk_adjustment(state)        
-        # backtest_results = state.get('backtest_results', {})
-        max_drawdown_limit = min(
-            self.risk_parameters["max_portfolio_risk"] * 1.5,  
-            # backtest_results.get('max_historical_drawdown', 0.15) * 1.2  
-        )        
+        backtest_results = state.get('backtest_results', {})
+        base_risk_limit = self.risk_parameters["max_portfolio_risk"] * 1.5
+        historical_drawdown_limit = backtest_results.get('max_historical_drawdown', 0.15) * 1.2
+        max_drawdown_limit = min(base_risk_limit, historical_drawdown_limit)
+        
         risk_components = [correlation_risk, sector_risk, volatility_risk, behavioral_adjustment]
         overall_risk = np.mean(risk_components)
         
@@ -487,14 +494,3 @@ class RiskManagementAgent:
         })
         
         return state
-
-def create_risk_management_node(risk_level: RiskLevel = RiskLevel.MODERATE):
-    agent = RiskManagementAgent(risk_level)
-    return agent
-
-def add_risk_management_to_workflow(workflow: StateGraph, risk_level: RiskLevel = RiskLevel.MODERATE):
-    risk_agent = create_risk_management_node(risk_level)    
-    workflow.add_node("risk_management", risk_agent)    
-    # workflow.add_edge("backtest_agent", "risk_management")
-    workflow.add_edge("risk_management", "execution_agent") 
-    return workflow

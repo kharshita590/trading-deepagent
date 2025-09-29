@@ -6,9 +6,10 @@ import logging
 import pandas as pd
 import numpy as np
 import yfinance as yf
-from langgraph import StateGraph, END
-from langgraph.graph.message import HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
+from langgraph.graph import StateGraph, END
+# from langgraph.graph.message import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
 from datetime import datetime, timedelta
 import talib
 from scipy import stats
@@ -289,7 +290,8 @@ class VolatilityLiquidityDataProvider:
 
 class VolatilityLiquidityAgent:
     def __init__(self, llm_model="gpt-4"):
-        self.llm = ChatOpenAI(model_name=llm_model, temperature=0.1)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0,
+        google_api_key="AIzaSyDl0-DuUoAmjs4hjM8E7TnRL7qazQ2Bq8w")
         self.data_provider = VolatilityLiquidityDataProvider()
 
     def create_workflow(self) -> StateGraph:

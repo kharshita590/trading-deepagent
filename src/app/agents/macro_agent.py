@@ -5,9 +5,10 @@ import asyncio
 import logging
 import requests
 import yfinance as yf
-from langgraph import StateGraph, END
-from langgraph.graph.message import HumanMessage, AIMessage
-from langchain_openai import ChatOpenAI
+from langgraph.graph import StateGraph, END
+from langchain_google_genai import ChatGoogleGenerativeAI
+# from langgraph.graph.message import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage
 from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO)
@@ -91,7 +92,8 @@ class MacroDataProvider:
 
 class MacroAgent:
     def __init__(self, llm_model="gpt-4"):
-        self.llm = ChatOpenAI(model_name=llm_model, temperature=0.1)
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0,
+        google_api_key="AIzaSyDl0-DuUoAmjs4hjM8E7TnRL7qazQ2Bq8w")
         self.data_provider = MacroDataProvider()
 
     def create_workflow(self) -> StateGraph:
@@ -130,7 +132,7 @@ class MacroAgent:
         return state
 
     async def analyze_economic_conditions(self, state: MacroAgentState) -> MacroAgentState:
-                logger.info("Analyzing economic conditions")
+        logger.info("Analyzing economic conditions")
         
         recommendations = state.get("recommendations", [])
         macro_data = state.get("macro_data", {})        
