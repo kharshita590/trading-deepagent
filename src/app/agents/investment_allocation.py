@@ -56,7 +56,7 @@ class InvestmentAllocationState(TypedDict):
 class InvestmentAllocationAgent:
     def __init__(self, llm_model="gemini-1.5-pro", indian_stock_tickers_file=None):
         self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0,
-        google_api_key="AIzaSyDl0-DuUoAmjs4hjM8E7TnRL7qazQ2Bq8w")
+        google_api_key="")
         self.indian_tickers_file = indian_stock_tickers_file
         
         self.allocation_factors = {
