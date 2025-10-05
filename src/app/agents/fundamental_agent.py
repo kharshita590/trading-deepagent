@@ -187,7 +187,7 @@ class FinancialDataProvider:
 class FundamentalAgent:
     def __init__(self, llm_model="gpt-4"):
         self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0,
-        google_api_key="AIzaSyDl0-DuUoAmjs4hjM8E7TnRL7qazQ2Bq8w")
+        google_api_key="")
         self.data_provider = FinancialDataProvider()
 
     def create_workflow(self) -> StateGraph:
