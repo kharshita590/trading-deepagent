@@ -44,9 +44,9 @@ class ResearchAgent:
         self.llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-pro", 
             temperature=0,
-            google_api_key="AIzaSyDl0-DuUoAmjs4hjM8E7TnRL7qazQ2Bq8w"
+            google_api_key=""
         )
-        self.api_key = "3f515b7af72944d582da4926e99accbf"
+        self.api_key = ""
 
     def create_workflow(self) -> StateGraph:
         workflow = StateGraph(ResearchAgentState)
