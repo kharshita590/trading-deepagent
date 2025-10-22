@@ -1,7 +1,7 @@
 import logging
 from typing import Dict
 from ..models.types import PortfolioState
-from ..investement_allocation_system.models.types import RiskLevel
+from ..investment_allocation_system.models.types import RiskLevel
 logger = logging.getLogger(__name__)
 class WorkflowNodes:    
     def __init__(self, orchestrators: Dict):

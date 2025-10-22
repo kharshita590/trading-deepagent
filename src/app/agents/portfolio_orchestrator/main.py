@@ -5,7 +5,7 @@ from .query_processor import QueryProcessor
 from .workflow_builder import WorkflowBuilder
 from .workflow_nodes import WorkflowNodes
 
-from ..investement_allocation_system.orchestrator import InvestmentAllocationOrchestrator
+from ..investment_allocation_system.orchestrator import InvestmentAllocationOrchestrator
 from ..research_agent.orchestrator import ResearchOrchestrator
 from ..fundamental_agent.orchestrator import FundamentalOrchestrator
 from ..macro_agent.orchestrator import MacroAnalysisOrchestrator
