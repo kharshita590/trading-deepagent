@@ -20,8 +20,8 @@ Forecasting, Sentiment, Risk, and Execution agents to get final stock list to in
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/trading-deepagent.git
-cd trading-deepagent
+git clone https://github.com/kharshita590/trading-deepagent.git
+cd app
 ```
 
 ---
@@ -113,33 +113,6 @@ To exit the application:
 ```
 exit
 ```
-
----
-
-## 📊 How It Works (Simple RAG Flow)
-
-1. User enters a query
-2. Query is converted into embeddings
-3. Vector database retrieves relevant chunks
-4. Retrieved context is passed to the model
-5. Model generates a response
-
----
-
-## 📌 Notes
-
-* Ensure your `data/` folder contains trading-related text files
-* The `vector_db/` directory will be created automatically on first run
-* Internet connection is required if using external APIs
-
----
-
-## 🧪 Future Improvements
-
-* Add CLI arguments support
-* Integrate real-time trading APIs
-* Improve retrieval with hybrid search
-* Add logging and evaluation metrics
 
 ---
 
