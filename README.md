@@ -21,7 +21,7 @@ Forecasting, Sentiment, Risk, and Execution agents to get final stock list to in
 
 ```bash
 git clone https://github.com/kharshita590/trading-deepagent.git
-cd app
+cd src
 ```
 
 ---
