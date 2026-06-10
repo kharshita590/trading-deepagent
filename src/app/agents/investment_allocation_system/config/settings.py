@@ -1,3 +1,5 @@
+from app.config.env import getenv
+
 ALLOCATION_FACTORS = {
     "diversification_benefits": {
         "single_stock_risk": 0.8, 
@@ -19,5 +21,5 @@ ALLOCATION_FACTORS = {
 LLM_CONFIG = {
     "model": "gemini-2.5-flash",
     "temperature": 0,
-    "api_key": "AIzaSyDl0-DuUoAmjs4hjM8E7TnRL7qazQ2Bq8w"
+    "api_key": getenv("GOOGLE_API_KEY", "") or ""
 }

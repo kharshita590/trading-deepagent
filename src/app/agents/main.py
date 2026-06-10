@@ -1,13 +1,22 @@
-from .portfolio_orchestrator.main import PortfolioOrchestrator
 import asyncio
 import logging
+import os
+
+from app.config.validate_env import validate_required_env
+
+from .portfolio_orchestrator.main import PortfolioOrchestrator
+
+
 async def main():
+    validate_required_env()
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    orchestrator = PortfolioOrchestrator(api_key="")
+
+    orchestrator = PortfolioOrchestrator(api_key=os.getenv("GOOGLE_API_KEY", ""))
     conversation_history = []
+    result = None
     print("Tell me about your investment plans, and I'll help you create a portfolio.")
     print("Type 'exit' to quit.\n")
     while True:

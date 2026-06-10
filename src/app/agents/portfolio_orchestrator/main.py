@@ -1,26 +1,28 @@
 import logging
+import os
 from typing import Dict, List, Optional
-from langchain_google_genai import ChatGoogleGenerativeAI
+
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except ModuleNotFoundError:  # pragma: no cover - fallback for smoke tests in constrained environments
+    class ChatGoogleGenerativeAI:  # type: ignore[override]
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
+
+from app.config.validate_env import validate_required_env
 from .query_processor import QueryProcessor
 from .workflow_builder import WorkflowBuilder
 from .workflow_nodes import WorkflowNodes
-
-from ..investment_allocation_system.orchestrator import InvestmentAllocationOrchestrator
-from ..research_agent.orchestrator import ResearchOrchestrator
-from ..fundamental_agent.orchestrator import FundamentalOrchestrator
-from ..macro_agent.orchestrator import MacroAnalysisOrchestrator
-from ..technical_agent.orchestrator import TechnicalAnalysisOrchestrator
-from ..volatality.orchestrator import VolatilityLiquidityOrchestrator
-from ..behavorial_agent.orchestrator import BehavioralPsychologyOrchestrator
-from ..risk_management.orchestrator import RiskManagementOrchestrator
 
 logger = logging.getLogger(__name__)
 
 
 class PortfolioOrchestrator:
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key
-        if api_key:
+        validate_required_env()
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY", "")
+        if self.api_key:
             self.gemini_model = ChatGoogleGenerativeAI(
                 model="gemini-2.5-flash",
                 temperature=0.1,
@@ -29,12 +31,21 @@ class PortfolioOrchestrator:
             self.query_processor = QueryProcessor(self.gemini_model)
         else:
             self.gemini_model = None
-            self.query_processor = None        
-        self._initialize_orchestrators()        
-        self._build_workflow()
+            self.query_processor = None
+        self.nodes = None
+        self.workflow = None
         logger.info("PortfolioOrchestrator initialized successfully")
     
     def _initialize_orchestrators(self):
+        from ..investment_allocation_system.orchestrator import InvestmentAllocationOrchestrator
+        from ..research_agent.orchestrator import ResearchOrchestrator
+        from ..fundamental_agent.orchestrator import FundamentalOrchestrator
+        from ..macro_agent.orchestrator import MacroAnalysisOrchestrator
+        from ..technical_agent.orchestrator import TechnicalAnalysisOrchestrator
+        from ..volatality.orchestrator import VolatilityLiquidityOrchestrator
+        from ..behavorial_agent.orchestrator import BehavioralPsychologyOrchestrator
+        from ..risk_management.orchestrator import RiskManagementOrchestrator
+
         orchestrators = {
             'investment': InvestmentAllocationOrchestrator(self.api_key),
             'research': ResearchOrchestrator(self.api_key),
@@ -51,6 +62,11 @@ class PortfolioOrchestrator:
     def _build_workflow(self):
         builder = WorkflowBuilder(self.nodes)
         self.workflow = builder.build()
+
+    def _ensure_workflow(self):
+        if self.workflow is None or self.nodes is None:
+            self._initialize_orchestrators()
+            self._build_workflow()
     
     async def process_user_query(
         self, 
@@ -122,6 +138,7 @@ class PortfolioOrchestrator:
         logger.info(f"Investment Amount: ₹{investment_amount:,.2f}")
         logger.info(f"Risk Tolerance: {risk_tolerance}")
         logger.info(f"Investment Horizon: {investment_horizon}")
+        self._ensure_workflow()
         
         initial_state = {
             "investment_amount": investment_amount,

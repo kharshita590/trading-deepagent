@@ -3,11 +3,13 @@ from dataclasses import dataclass
 from typing import Optional
 import logging
 
+from app.config.env import getenv
+
 @dataclass
 class LLMConfig:
     model_name: str = "gemini-2.5-flash"
     temperature: float = 0.0
-    api_key: str = ""
+    api_key: str = getenv("GOOGLE_API_KEY", "") or ""
     max_retries: int = 3
     timeout: int = 60
 
