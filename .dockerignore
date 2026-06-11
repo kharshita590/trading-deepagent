@@ -1,0 +1,9 @@
+.git
+.pytest_cache
+.mypy_cache
+__pycache__
+.DS_Store
+tests
+htmlcov
+*.db
+src/app/**/__pycache__

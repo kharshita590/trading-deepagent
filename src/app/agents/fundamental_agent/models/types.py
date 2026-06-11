@@ -6,6 +6,7 @@ class FundamentalAnalysis:
     company_financials_summary: str
     sector_strength_summary: str
     fundamental_investment_thesis: str
+    stock_metrics: Optional[Dict[str, Dict]] = None
 
 class FundamentalAgentState(TypedDict):
     recommendations: List[Dict]  

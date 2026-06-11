@@ -24,6 +24,12 @@ class PortfolioState(BaseModel):
     technical_analysis: Any = None
     volatility_liquidity_analysis: Any = None
     behavioral_psychology_analysis: Any = None
+    fundamental_data: Any = None
+    macro_data: Any = None
+    technical_data: Any = None
+    volatility_liquidity_data: Any = None
+    behavioral_data: Any = None
+    analysis_timings: Dict = Field(default_factory=dict)
     
     risk_management_result: Any = None
     

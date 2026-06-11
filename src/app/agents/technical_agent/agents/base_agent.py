@@ -51,7 +51,7 @@ class DataFetcherAgent(BaseAgent):
         for rec in recommendations:
             ticker = rec.get("ticker", "")
             self.log_info(f"Processing {ticker}")            
-            price_data = self.data_provider.get_price_data(ticker)
+            price_data = await self.data_provider.get_price_data(ticker)
             
             if not price_data.empty:
                 indicators = self.data_provider.calculate_technical_indicators(price_data)                
@@ -296,13 +296,32 @@ class CompilationAgent(BaseAgent):
     
     async def execute(self, state: TechnicalAgentState) -> TechnicalAgentState:
         self.log_info("Compiling technical analysis")
+        technical_data = state.get("technical_data", {})
+        key_levels_by_ticker = {}
+        signal_by_ticker = {}
+        confidence_scores = []
+        momentum_scores = []
+        for ticker, data in technical_data.items():
+            if "error" in data:
+                continue
+            signal = data.get("signals", {})
+            signal_by_ticker[ticker] = signal
+            key_levels_by_ticker[ticker] = signal.get("key_levels", {})
+            strength = signal.get("strength", 0)
+            confidence_scores.append(min(max(abs(strength) / 100.0, 0.0), 1.0))
+            momentum_scores.append(min(max((strength + 100) / 200.0, 0.0), 1.0))
         
         technical_analysis = TechnicalAnalysis(
             technical_indicators_summary=state.get("indicators_analysis", "Analysis unavailable"),
             pattern_detection_summary=state.get("patterns_analysis", "Analysis unavailable"),
-            technical_trading_signals=state.get("signals_analysis", "Analysis unavailable")
+            technical_trading_signals=state.get("signals_analysis", "Analysis unavailable"),
+            key_levels_by_ticker=key_levels_by_ticker,
+            signal_by_ticker=signal_by_ticker,
+            confidence_score=float(np.mean(confidence_scores)) if confidence_scores else 0.0,
+            momentum_score=float(np.mean(momentum_scores)) if momentum_scores else 0.0
         )
         state["technical_analysis"] = technical_analysis
+        state["technical_data_summary"] = technical_data
         state["messages"].append(AIMessage(content="Completed comprehensive technical analysis"))
         self.log_info("Technical analysis compilation completed")
         return state

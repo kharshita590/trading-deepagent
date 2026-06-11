@@ -3,7 +3,11 @@ from __future__ import annotations
 import os
 from typing import Optional
 
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:  # pragma: no cover - sandbox fallback
+    def load_dotenv(*args, **kwargs):  # type: ignore[override]
+        return False
 
 load_dotenv()
 
