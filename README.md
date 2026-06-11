@@ -136,11 +136,3 @@ Run the main test suite with:
 ```bash
 poetry run pytest
 ```
-
-The repository also includes unit and integration tests for strategy logic, risk math, technical indicators, bias detection, and graph wiring.
-
-## Notes
-
-- The code keeps a compatibility bridge for the legacy `behavorial_agent` import path, but new code should use `behavioral_agent`.
-- SQLite is the default database. Set `DATABASE_URL` to point at Postgres if needed.
-- `KNOWN_LIMITATIONS.md` tracks gaps that are intentionally deferred.
