@@ -1,10 +1,11 @@
+from app.config.env import getenv
 
-TWELVEDATA_API_KEY = ""
+TWELVEDATA_API_KEY = getenv("TWELVEDATA_API_KEY", "") or ""
 
 LLM_CONFIG = {
     "model": "gemini-2.5-flash",
     "temperature": 0,
-    "api_key": ""
+    "api_key": getenv("GOOGLE_API_KEY", "") or ""
 }
 
 STOCK_FILTERING = {

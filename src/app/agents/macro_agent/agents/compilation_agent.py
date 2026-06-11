@@ -16,11 +16,15 @@ class CompilationAgent:
     
     async def compile(self, state: MacroAgentState) -> MacroAgentState:
         logger.info("Compiling macro analysis")
+        macro_data = state.get("macro_data", {})
+        market_sentiment = macro_data.get("economic_indicators", {}).get("market_sentiment")
         
         macro_analysis = MacroAnalysis(
             economic_conditions_summary=state.get("economic_analysis", "Analysis unavailable"),
             interest_rate_impact_summary=state.get("interest_rate_analysis", "Analysis unavailable"),
-            global_events_summary=state.get("global_events_analysis", "Analysis unavailable")
+            global_events_summary=state.get("global_events_analysis", "Analysis unavailable"),
+            market_sentiment=market_sentiment,
+            macro_data=macro_data
         )
         
         state["macro_analysis"] = macro_analysis

@@ -5,8 +5,128 @@ import logging
 from typing import Dict, Optional
 import pandas as pd
 import numpy as np
-import yfinance as yf
-import talib
+from app.core.yfinance_utils import fetch_history
+
+try:
+    import talib
+except ModuleNotFoundError:  # pragma: no cover - fallback for environments without TA-Lib
+    class _FallbackTalib:
+        @staticmethod
+        def SMA(close, timeperiod=14):
+            return pd.Series(close).rolling(timeperiod).mean().to_numpy()
+
+        @staticmethod
+        def EMA(close, timeperiod=14):
+            return pd.Series(close).ewm(span=timeperiod, adjust=False).mean().to_numpy()
+
+        @staticmethod
+        def MACD(close, fastperiod=12, slowperiod=26, signalperiod=9):
+            series = pd.Series(close)
+            fast = series.ewm(span=fastperiod, adjust=False).mean()
+            slow = series.ewm(span=slowperiod, adjust=False).mean()
+            macd = fast - slow
+            signal = macd.ewm(span=signalperiod, adjust=False).mean()
+            hist = macd - signal
+            return macd.to_numpy(), signal.to_numpy(), hist.to_numpy()
+
+        @staticmethod
+        def RSI(close, timeperiod=14):
+            delta = pd.Series(close).diff()
+            gain = delta.clip(lower=0).rolling(timeperiod).mean()
+            loss = (-delta.clip(upper=0)).rolling(timeperiod).mean()
+            rs = gain / loss.replace(0, np.nan)
+            return (100 - (100 / (1 + rs))).fillna(50).to_numpy()
+
+        @staticmethod
+        def STOCH(high, low, close, fastk_period=14, slowk_period=3, slowd_period=3):
+            high_series = pd.Series(high)
+            low_series = pd.Series(low)
+            close_series = pd.Series(close)
+            lowest_low = low_series.rolling(fastk_period).min()
+            highest_high = high_series.rolling(fastk_period).max()
+            fast_k = ((close_series - lowest_low) / (highest_high - lowest_low).replace(0, np.nan)) * 100
+            slow_k = fast_k.rolling(slowk_period).mean()
+            slow_d = slow_k.rolling(slowd_period).mean()
+            return slow_k.fillna(50).to_numpy(), slow_d.fillna(50).to_numpy()
+
+        @staticmethod
+        def BBANDS(close, timeperiod=20, nbdevup=2, nbdevdn=2):
+            series = pd.Series(close)
+            middle = series.rolling(timeperiod).mean()
+            std = series.rolling(timeperiod).std(ddof=0)
+            upper = middle + std * nbdevup
+            lower = middle - std * nbdevdn
+            return upper.to_numpy(), middle.to_numpy(), lower.to_numpy()
+
+        @staticmethod
+        def OBV(close, volume):
+            close_series = pd.Series(close)
+            volume_series = pd.Series(volume)
+            direction = np.sign(close_series.diff().fillna(0))
+            return (direction * volume_series).cumsum().to_numpy()
+
+        @staticmethod
+        def AD(high, low, close, volume):
+            high_series = pd.Series(high)
+            low_series = pd.Series(low)
+            close_series = pd.Series(close)
+            volume_series = pd.Series(volume)
+            denominator = (high_series - low_series).replace(0, np.nan)
+            mfm = (((close_series - low_series) - (high_series - close_series)) / denominator).fillna(0)
+            return (mfm * volume_series).cumsum().to_numpy()
+
+        @staticmethod
+        def WILLR(high, low, close, timeperiod=14):
+            high_series = pd.Series(high)
+            low_series = pd.Series(low)
+            close_series = pd.Series(close)
+            highest_high = high_series.rolling(timeperiod).max()
+            lowest_low = low_series.rolling(timeperiod).min()
+            return ((highest_high - close_series) / (highest_high - lowest_low).replace(0, np.nan) * -100).fillna(-50).to_numpy()
+
+        @staticmethod
+        def CCI(high, low, close, timeperiod=20):
+            typical_price = (pd.Series(high) + pd.Series(low) + pd.Series(close)) / 3
+            sma = typical_price.rolling(timeperiod).mean()
+            mean_dev = typical_price.rolling(timeperiod).apply(lambda x: np.mean(np.abs(x - np.mean(x))), raw=True)
+            return ((typical_price - sma) / (0.015 * mean_dev.replace(0, np.nan))).fillna(0).to_numpy()
+
+        @staticmethod
+        def ADX(high, low, close, timeperiod=14):
+            return pd.Series(close).rolling(timeperiod).std(ddof=0).fillna(0).to_numpy()
+
+        @staticmethod
+        def ATR(high, low, close, timeperiod=14):
+            high_series = pd.Series(high)
+            low_series = pd.Series(low)
+            close_series = pd.Series(close)
+            prev_close = close_series.shift(1)
+            tr = pd.concat(
+                [
+                    (high_series - low_series),
+                    (high_series - prev_close).abs(),
+                    (low_series - prev_close).abs(),
+                ],
+                axis=1,
+            ).max(axis=1)
+            return tr.rolling(timeperiod).mean().fillna(tr.mean()).to_numpy()
+
+        @staticmethod
+        def _pattern(open_price, high, low, close):
+            return np.zeros(len(close), dtype=float)
+
+        CDLDOJI = staticmethod(_pattern)
+        CDLHAMMER = staticmethod(_pattern)
+        CDLSHOOTINGSTAR = staticmethod(_pattern)
+        CDLENGULFING = staticmethod(_pattern)
+        CDLMORNINGSTAR = staticmethod(_pattern)
+        CDLEVENINGSTAR = staticmethod(_pattern)
+        CDL3WHITESOLDIERS = staticmethod(_pattern)
+        CDL3BLACKCROWS = staticmethod(_pattern)
+        CDLHANGINGMAN = staticmethod(_pattern)
+        CDLINVERTEDHAMMER = staticmethod(_pattern)
+
+    talib = _FallbackTalib()
 
 from ..models.types import TechnicalIndicators, ChartPatterns, TradingSignals, SignalType
 from ..config.settings import settings
@@ -19,23 +139,19 @@ class TechnicalDataProvider:
     def __init__(self):
         self.config = settings
     
-    def get_price_data(self, ticker: str, period: str = None) -> pd.DataFrame:
+    async def get_price_data(self, ticker: str, period: str = None) -> pd.DataFrame:
         """Fetch price data for a ticker"""
         if period is None:
             period = self.config.data.default_period
-        
         try:
-            stock = yf.Ticker(ticker)
-            data = stock.history(period=period)
-            
+            data = await fetch_history(ticker, period=period)
             if data.empty:
-                logger.warning(f"No price data available for {ticker}")
+                logger.warning("No price data available for %s", ticker)
             else:
-                logger.info(f"Fetched {len(data)} rows of price data for {ticker}")
-            
+                logger.info("Fetched %s rows of price data for %s", len(data), ticker)
             return data
         except Exception as e:
-            logger.error(f"Error fetching price data for {ticker}: {e}")
+            logger.error("Error fetching price data for %s: %s", ticker, e)
             return pd.DataFrame()
     
     def calculate_technical_indicators(self, df: pd.DataFrame) -> Dict:

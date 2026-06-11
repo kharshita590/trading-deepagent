@@ -12,10 +12,12 @@ from ..config.settings import logger, GOOGLE_API_KEY, LLM_MODEL, LLM_TEMPERATURE
 class CompilationAgent:
     async def execute(self, state: VolatilityLiquidityAgentState) -> VolatilityLiquidityAgentState:
         logger.info("Compiling volatility/liquidity analysis")
+        stock_metrics = state.get("vol_liq_data", {})
         vol_liq_analysis = VolatilityLiquidityAnalysis(
             volatility_assessment_summary=state.get("volatility_analysis", "Analysis unavailable"),
             liquidity_analysis_summary=state.get("liquidity_analysis", "Analysis unavailable"),
-            risk_management_recommendations=state.get("risk_recommendations", "Analysis unavailable")
+            risk_management_recommendations=state.get("risk_recommendations", "Analysis unavailable"),
+            stock_metrics=stock_metrics
         )
         
         state["volatility_liquidity_analysis"] = vol_liq_analysis

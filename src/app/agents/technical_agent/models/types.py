@@ -114,6 +114,10 @@ class TechnicalAnalysis:
     pattern_detection_summary: str
     technical_trading_signals: str
     timestamp: Optional[str] = None
+    key_levels_by_ticker: Optional[Dict[str, Dict[str, float]]] = None
+    signal_by_ticker: Optional[Dict[str, Dict[str, Any]]] = None
+    confidence_score: Optional[float] = None
+    momentum_score: Optional[float] = None
 
 class AgentState(TypedDict):
     messages: List
@@ -126,6 +130,7 @@ class TechnicalAgentState(AgentState):
     patterns_analysis: Optional[str]
     signals_analysis: Optional[str]
     technical_analysis: Optional[TechnicalAnalysis]
+    technical_data_summary: Optional[Dict[str, Any]]
 
 class DataFetcherState(AgentState):
     recommendations: List[Dict]

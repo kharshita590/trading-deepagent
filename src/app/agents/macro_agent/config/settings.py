@@ -1,13 +1,14 @@
-import os
 from typing import Dict
 from dataclasses import dataclass
+
+from app.config.env import getenv
 
 
 @dataclass
 class LLMConfig:
     model: str = "gemini-2.5-flash"
     temperature: float = 0.0
-    api_key: str = os.getenv("GOOGLE_API_KEY", "")
+    api_key: str = getenv("GOOGLE_API_KEY", "") or ""
     max_retries: int = 3
     timeout: int = 30
 

@@ -1,24 +1,23 @@
 from typing import Dict
 import pandas as pd
 import numpy as np
-import yfinance as yf
 import talib
 from scipy import stats
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
+from app.core.yfinance_utils import fetch_history
 from ..models.types import VolatilityLiquidityAgentState, VolatilityLiquidityAnalysis
 from ..config.settings import logger, GOOGLE_API_KEY, LLM_MODEL, LLM_TEMPERATURE
 
 class VolatilityLiquidityDataProvider:    
     @staticmethod
-    def get_extended_price_data(ticker: str) -> Dict:
+    async def get_extended_price_data(ticker: str) -> Dict:
         try:
-            stock = yf.Ticker(ticker)            
-            data_1y = stock.history(period="1y")  
-            data_3m = stock.history(period="3mo")  
-            data_1m = stock.history(period="1mo")  
-            data_5d = stock.history(period="5d", interval="1h")              
-            info = stock.info
+            data_1y = await fetch_history(ticker, period="1y")
+            data_3m = await fetch_history(ticker, period="3mo")
+            data_1m = await fetch_history(ticker, period="1mo")
+            data_5d = await fetch_history(ticker, period="5d", interval="1h")
+            info = {}
             
             return {
                 "data_1y": data_1y,
@@ -282,7 +281,7 @@ class DataFetchAgent:
         for rec in recommendations:
             ticker = rec.get("ticker", "")
             allocation_amount = rec.get("allocation_amount", 0)            
-            data_dict = self.data_provider.get_extended_price_data(ticker)
+            data_dict = await self.data_provider.get_extended_price_data(ticker)
             
             if "error" not in data_dict:
                 volatility_metrics = self.data_provider.calculate_volatility_metrics(data_dict)

@@ -8,6 +8,8 @@ class MacroAnalysis:
     economic_conditions_summary: str
     interest_rate_impact_summary: str
     global_events_summary: str
+    market_sentiment: Optional[str] = None
+    macro_data: Optional[Dict] = None
 
 
 @dataclass
@@ -37,6 +39,7 @@ class MacroAgentState(TypedDict):
     interest_rate_analysis: Optional[str]
     global_events_analysis: Optional[str]
     macro_analysis: Optional[MacroAnalysis]
+    market_sentiment: Optional[str]
     messages: List
     portfolio_amount: Optional[float]
 

@@ -1,12 +1,12 @@
 from .base_agent import BaseResearchAgent
 from ..models.types import ResearchAgentState
-from ..services.api_service import TwelveDataService
+from ..services.api_service import NSEStockUniverseService
 from ..config.settings import TWELVEDATA_API_KEY
 
 class StockFetcherAgent(BaseResearchAgent):    
     def __init__(self, llm=None):
         super().__init__(llm)
-        self.api_service = TwelveDataService(TWELVEDATA_API_KEY)
+        self.api_service = NSEStockUniverseService(twelve_data_api_key=TWELVEDATA_API_KEY)
     
     async def execute(self, state: ResearchAgentState) -> ResearchAgentState:
         preferred_sectors = state["preferred_sectors"]

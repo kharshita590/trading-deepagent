@@ -2,7 +2,14 @@ import logging
 import asyncio
 import json
 from typing import Dict, List
-from langchain_google_genai import ChatGoogleGenerativeAI
+
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+except ModuleNotFoundError:  # pragma: no cover - fallback for smoke tests in constrained environments
+    class ChatGoogleGenerativeAI:  # type: ignore[override]
+        def __init__(self, *args, **kwargs):
+            self.args = args
+            self.kwargs = kwargs
 from ..models.types import QueryState
 logger = logging.getLogger(__name__)
 class QueryProcessor:    

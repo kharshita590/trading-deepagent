@@ -1,121 +1,146 @@
 # trading-deepagent
 
-Architected a multi-agent orchestration layer (DeepAgents) with LangGraph to run parallel workflows across Data,
-Forecasting, Sentiment, Risk, and Execution agents to get final stock list to invest according to the needs.
+Multi-agent portfolio advisor for NSE/Indian stocks built with LangGraph. The system coordinates research, fundamental, macro, technical, volatility, behavioral, and risk workflows to produce portfolio suggestions.
 
----
+## Prerequisites
 
----
+- Python 3.11+
+- Poetry
+- Redis for caching and async job storage
+- Optional: Postgres if you want to override the default SQLite persistence
+- API access for live analysis:
+  - `GOOGLE_API_KEY`
+  - `TWELVEDATA_API_KEY` if you plan to use the TwelveData fallback
 
-## ⚙️ Prerequisites
+## Setup
 
-* Python 3.9 or higher
-* pip (Python package manager)
-* OpenAI API key (if using OpenAI models)
-
----
-
-## 🛠️ Installation
-
-### 1. Clone the Repository
+1. Clone the repo and enter it:
 
 ```bash
-git clone https://github.com/kharshita590/trading-deepagent.git
-cd src
+git clone <repo-url>
+cd trading-deepagent
 ```
 
----
-
-### 2. Create Virtual Environment (Recommended)
+2. Install dependencies:
 
 ```bash
-python -m venv venv
+poetry install
 ```
 
-Activate the environment:
-
-* **Windows**
+3. Create your environment file:
 
 ```bash
-venv\Scripts\activate
+cp .env.example .env
 ```
 
-* **Mac/Linux**
+4. Fill in the required values in `.env`:
+
+- `GOOGLE_API_KEY`
+- `TWELVEDATA_API_KEY`
+- `LOG_LEVEL`
+- `REDIS_URL`
+- `DATABASE_URL`
+- `API_KEY_SECRET` for API access control if you use the FastAPI service
+
+The application validates required values on startup and will fail fast if a required key is missing.
+
+## Run the CLI
+
+The CLI is the simplest way to use the project locally:
 
 ```bash
-source venv/bin/activate
+poetry run python -m app.agents.main
+PYTHONPATH=src poetry run python -m app.agents.main
 ```
 
----
+Type a portfolio question, for example:
 
-### 3. Install Dependencies
+```text
+I have 250000 INR, moderate risk, 3 year horizon, diversified across pharma and banking.
+```
 
-If `requirements.txt` exists:
+The CLI prints a disclaimer with every recommendation. It is algorithmic/educational output only and is not SEBI-registered investment advice.
+
+If you want the CLI to talk to a local API server instead of running the orchestrator directly, set:
 
 ```bash
-pip install -r requirements.txt
+export PORTFOLIO_API_URL=http://localhost:8000
 ```
 
-Or install manually:
+## Run the API
+
+Start the FastAPI service:
 
 ```bash
-pip install langchain langchain-openai chromadb tiktoken python-dotenv
+poetry run uvicorn app.api.main:app --reload
 ```
 
----
+Useful endpoints:
 
-## 🔑 Environment Variables
+- `POST /portfolio/analyze`
+- `GET /portfolio/analyze/{job_id}`
+- `GET /portfolio/history`
+- `GET /health`
+- `GET /docs`
 
-Set your API key before running the project:
+Requests are protected with `X-API-Key` when `API_KEY_SECRET` is set.
 
-### Linux / Mac
+Example request:
 
 ```bash
-export OPENAI_API_KEY=your_api_key
+curl -X POST http://localhost:8000/portfolio/analyze \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-secret" \
+  -d '{
+    "query": "I want a moderately risky portfolio for 3 years with 250000 INR",
+    "conversation_history": []
+  }'
 ```
 
-### Windows
+## Backtesting
+
+The technical signal logic can be validated against historical data:
 
 ```bash
-set OPENAI_API_KEY=your_api_key
+poetry run python -m app.backtest.run --ticker RELIANCE --period 2y
 ```
 
----
+This is reporting only and does not alter live recommendations.
 
-## 🚀 Running the Application
+## NSE Universe Refresh
 
-Navigate to the agent directory:
+The research agent uses a bundled NSE universe CSV. To refresh it manually:
 
 ```bash
-cd app/agents
+poetry run python scripts/refresh_nse_universe.py
 ```
 
-Run the main script:
+## Docker
+
+Build and run the stack with Redis:
 
 ```bash
-python main.py
+docker compose up --build
 ```
 
----
+The compose file includes:
 
-## 💬 Entering User Query
+- `app` for the FastAPI service
+- `redis` for caching and job storage
+- optional `postgres` behind a profile
 
-Once the program starts, you will be prompted to enter a query in the terminal.
+## Testing
 
-Example:
+Run the main test suite with:
 
-```
-Enter your trading query (or 'exit'): What is RSI?
-```
-
-To exit the application:
-
-```
-exit
+```bash
+poetry run pytest
 ```
 
----
+The repository also includes unit and integration tests for strategy logic, risk math, technical indicators, bias detection, and graph wiring.
 
-## 📄 License
+## Notes
 
-MIT License
+- The code keeps a compatibility bridge for the legacy `behavorial_agent` import path, but new code should use `behavioral_agent`.
+- SQLite is the default database. Set `DATABASE_URL` to point at Postgres if needed.
+- `KNOWN_LIMITATIONS.md` tracks gaps that are intentionally deferred.
